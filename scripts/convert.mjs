@@ -21,6 +21,9 @@ const DROP_SCRIPT = [
   /cgkit_nonce/,
   /kirki/,
   /wp_kirki/,
+  /comment-reply/,
+  /zxcvbn/,
+  /password-strength/,
   // Elementor's runtime lazy-loads chunks from the old WordPress server.
   /webpack\.runtime/,
   /frontend-modules\.min/,
@@ -120,7 +123,8 @@ for (const route of routes) {
   scripts.sort((a, b) => isJq(b) - isJq(a));
 
   const body = $("body");
-  body.find("script, style").remove();
+  // Underscore templates (product variations) stay in the page: they are data, not code.
+  body.find('script:not([type="text/template"]), style').remove();
 
   // Without Elementor's runtime, entrance animations never start: play them
   // straight away instead of leaving the elements hidden.

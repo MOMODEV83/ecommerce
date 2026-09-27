@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "crawl": "node scripts/crawl.mjs",
+    "import": "node scripts/import.mjs",
     "convert": "node scripts/convert.mjs",
     "dev": "next dev",
     "build": "next build",
