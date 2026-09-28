@@ -7,6 +7,7 @@ Site Sky Garden Access migré de WordPress vers Next.js (App Router, pages stati
 - `scripts/import.mjs` : ajoute ces pages à `legacy-html/` et télécharge leurs images/CSS/JS dans `public/wp-content/`
 - `scripts/convert.mjs` : convertit `legacy-html/` en données de page (`content/pages.json`)
 - `app/[[...slug]]/page.tsx` : rend chaque page (CSS, contenu, scripts du thème)
+- `public/js/sga-cart.js` : panier (stocké dans le navigateur), page /panier/ et page /paiement/ ; la commande est envoyée sur WhatsApp. Frais de livraison, numéro WhatsApp et emballage cadeau sont en tête du fichier.
 
 ```bash
 npm install

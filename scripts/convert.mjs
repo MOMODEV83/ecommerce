@@ -24,6 +24,11 @@ const DROP_SCRIPT = [
   /comment-reply/,
   /zxcvbn/,
   /password-strength/,
+  // Checkout AJAX: orders are handled by public/js/sga-cart.js instead.
+  /\/checkout\.min\.js/,
+  /custom-place-order-button/,
+  /wc_checkout_params/,
+  /sgApplyCoupon/,
   // Elementor's runtime lazy-loads chunks from the old WordPress server.
   /webpack\.runtime/,
   /frontend-modules\.min/,
@@ -64,6 +69,36 @@ function rewriteCss(css, route) {
 
 function rewriteInlineJs(js, route) {
   return js.replace(/(["'])((?:\.\.\/)*(?:images|js|css|fonts|assets)\/[^"']+)\1/g, (m, q, u) => q + rewriteUrl(u, route) + q);
+}
+
+// The cart and checkout pages were fetched with a sample item in the cart:
+// their dynamic parts are emptied and rendered by public/js/sga-cart.js.
+function preparePanier($, body) {
+  body.find("section.shoptimizer-cart-wrapper").empty().attr("id", "sga-cart");
+}
+
+function preparePaiement($, body) {
+  // No customer accounts or coupons without WordPress.
+  body.find(".woocommerce-form-login-toggle, form.woocommerce-form-login, .woocommerce-account-fields").remove();
+  body.find(".coupon-wrapper, .sg-checkout-coupon-row, wc-order-attribution-inputs").remove();
+  body.find("#order_review tbody, #order_review tfoot").empty();
+  body.find('input[type="hidden"][name^="woocommerce-"], input[name="_wp_http_referer"]').remove();
+  body.find("form.woocommerce-checkout").removeAttr("action").attr("novalidate", "");
+
+  // SamirPay needs its server-side plugin: offer mobile money on WhatsApp instead.
+  body.find(".payment_method_samirpay").replaceWith(`
+    <li class="wc_payment_method payment_method_mobile">
+      <input id="payment_method_mobile" type="radio" class="input-radio" name="payment_method" value="mobile" checked="checked">
+      <label for="payment_method_mobile">Paiement mobile (Wave / Orange Money)</label>
+      <div class="payment_box payment_method_mobile"><p>Après votre commande, nous vous envoyons le lien de paiement sur WhatsApp.</p></div>
+    </li>`);
+  body.find("#payment_method_cod").removeAttr("checked");
+  body.find("#place_order").text("Commander sur WhatsApp").attr("value", "Commander sur WhatsApp");
+  body.find("form.woocommerce-checkout").before(`
+    <div id="sga-checkout-empty" style="display:none">
+      <div class="cart-empty woocommerce-info" role="status">Votre panier est vide.</div>
+      <p class="return-to-shop"><a class="button wc-backward" href="/catalogue/">Retour à la boutique</a></p>
+    </div>`);
 }
 
 const pages = {};
@@ -121,8 +156,12 @@ for (const route of routes) {
   // jQuery must run before any inline script that uses it.
   const isJq = (x) => /\/jquery(-migrate)?\.min\./.test(x.src || "");
   scripts.sort((a, b) => isJq(b) - isJq(a));
+  // Cart and WhatsApp checkout, replacing the WooCommerce backend.
+  scripts.push({ id: "sga-cart", src: "/js/sga-cart.js" });
 
   const body = $("body");
+  if (route === "panier") preparePanier($, body);
+  if (route === "paiement") preparePaiement($, body);
   // Underscore templates (product variations) stay in the page: they are data, not code.
   body.find('script:not([type="text/template"]), style').remove();
 
